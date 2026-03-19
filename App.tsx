@@ -16,7 +16,6 @@ export default function App() {
     const unsub = onAuthStateChanged(auth, (u) => {
       const email = u?.email ?? null;
       setUserEmail(email);
-      // Automatically navigate based on auth state
       if (email) {
         setScreen("home");
       } else {
@@ -34,7 +33,5 @@ export default function App() {
     return <RegisterScreen onNavigateLogin={() => setScreen("login")} />;
   }
 
-  return (
-    <LoginScreen onNavigateRegister={() => setScreen("register")} />
-  );
+  return <LoginScreen onNavigateRegister={() => setScreen("register")} />;
 }

@@ -1,120 +1,81 @@
 import { useState } from "react";
 import {
-  Alert, Platform,
-  Text, TextInput,
-  View, KeyboardAvoidingView,
-  Pressable, ScrollView,
+  Alert, Platform, Text, TextInput,
+  View, KeyboardAvoidingView, Pressable, ScrollView,
 } from "react-native";
 import { signOut } from "firebase/auth";
-import {
-  addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp,
-} from "firebase/firestore";
-import { auth, db } from "../lib/firebase";
+import { auth } from "../lib/firebase";
+
+const accent = "#E8450A";
 
 type Note = { id: string; text: string };
-
-type Props = {
-  userEmail: string | null;
-};
+type Props = { userEmail: string | null };
 
 export default function HomeScreen({ userEmail }: Props) {
-  const [noteText, setNoteText] = useState("Primeira anotação");
+  const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<Note[]>([]);
 
   async function handleLogout() {
     try {
-      console.log("LOGOUT !!!");
       await signOut(auth);
-      console.log("LOGOUT OK");
-      Alert.alert("Logout Ok!");
     } catch (error) {
-      console.log("Logout failed ", error);
+      console.log("Logout failed", error);
     }
   }
 
-  async function AddNote() {
-    try {
-      console.log("ADD Note --> ", noteText);
-      const docRef = await addDoc(collection(db, "notes"), {
-        text: noteText,
-        createdAt: serverTimestamp(),
-        user: userEmail ?? null,
-      });
-      console.log("ADD NOTE OK id: ", docRef.id);
-      setNoteText("");
-      await refreshNotes();
-    } catch (error) {
-      console.log("addNote failed ", error);
-    }
-  }
-
-  async function refreshNotes() {
-    try {
-      console.log("REFRESH NOTES !!!");
-      const response = query(
-        collection(db, "notes"),
-        orderBy("createdAt", "desc"),
-        limit(10)
-      );
-      const snap = await getDocs(response);
-      console.log("NOTES count: ", snap.size);
-      setNotes(snap.docs.map((n) => ({ id: n.id, text: String(n.data().text ?? "") })));
-    } catch (error) {
-      console.log("refreshNotes failed ", error);
-    }
+  function addNote() {
+    if (!noteText.trim()) return;
+    setNotes((prev) => [{ id: Date.now().toString(), text: noteText.trim() }, ...prev]);
+    setNoteText("");
   }
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, marginTop: 25 }}
+      style={{ flex: 1, backgroundColor: "#fff", marginTop: 25 }}
       behavior={Platform.select({ ios: "padding", android: "height" })}
     >
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-        <Text style={{ fontSize: 22, fontWeight: "700" }}>
-          Expo/React + Firebase (mínimo)
-        </Text>
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }}>
 
-        {/* Header with user info and logout */}
-        <View style={{ padding: 12, borderWidth: 1, borderRadius: 12, gap: 10, marginTop: 5 }}>
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>Auth</Text>
-          <Text>Usuário logado: {userEmail ?? "nenhum"}</Text>
+        {/* Header */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <Text style={{ fontSize: 20, fontWeight: "800", color: "#1a1a1a" }}>Notas</Text>
           <Pressable
             onPress={handleLogout}
-            style={{ padding: 10, borderWidth: 1, borderRadius: 10, alignSelf: "flex-start" }}
+            style={{ backgroundColor: accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
           >
-            <Text>Logout</Text>
+            <Text style={{ color: "#fff", fontWeight: "600" }}>Sair</Text>
           </Pressable>
         </View>
 
-        {/* Firestore notes section */}
-        <View style={{ padding: 12, borderWidth: 1, borderRadius: 12, gap: 10, marginTop: 5 }}>
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>Firestore</Text>
-          <TextInput
-            value={noteText}
-            onChangeText={setNoteText}
-            placeholder="Texto da anotação"
-            style={{ borderWidth: 1, borderRadius: 10, padding: 10 }}
-          />
-          <View style={{ flexDirection: "row", gap: 10, flexWrap: "wrap" }}>
-            <Pressable
-              onPress={AddNote}
-              style={{ padding: 10, borderWidth: 1, borderRadius: 10 }}
-            >
-              <Text>Salvar nota</Text>
-            </Pressable>
-            <Pressable
-              onPress={refreshNotes}
-              style={{ padding: 10, borderWidth: 1, borderRadius: 10 }}
-            >
-              <Text>Recarregar</Text>
-            </Pressable>
+        {/* Input */}
+        <TextInput
+          value={noteText}
+          onChangeText={setNoteText}
+          placeholder="Nova nota..."
+          placeholderTextColor="#aaa"
+          multiline
+          style={{
+            borderWidth: 1.5, borderColor: "#ddd", borderRadius: 10,
+            padding: 12, fontSize: 14, minHeight: 80, textAlignVertical: "top",
+          }}
+        />
+        <Pressable
+          onPress={addNote}
+          style={{ backgroundColor: accent, borderRadius: 10, padding: 13, alignItems: "center" }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "700" }}>Adicionar</Text>
+        </Pressable>
+
+        {/* Notes */}
+        {notes.map((n) => (
+          <View key={n.id} style={{
+            borderLeftWidth: 3, borderLeftColor: accent,
+            backgroundColor: "#fafafa", borderRadius: 8, padding: 12,
+          }}>
+            <Text style={{ fontSize: 14, color: "#1a1a1a" }}>{n.text}</Text>
           </View>
-          <View>
-            {notes.map((n) => (
-              <Text key={n.id}>- {n.text}</Text>
-            ))}
-          </View>
-        </View>
+        ))}
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
