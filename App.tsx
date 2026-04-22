@@ -10,12 +10,15 @@ type Screen = "login" | "register" | "home";
 
 export default function App() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>("login");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       const email = u?.email ?? null;
+      const uid = u?.uid ?? null;
       setUserEmail(email);
+      setUserId(uid);
       if (email) {
         setScreen("home");
       } else {
@@ -26,7 +29,7 @@ export default function App() {
   }, []);
 
   if (screen === "home") {
-    return <HomeScreen userEmail={userEmail} />;
+    return <HomeScreen userId={userId} />;
   }
 
   if (screen === "register") {

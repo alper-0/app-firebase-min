@@ -31,3 +31,25 @@ Bloco3
 Pega o serviço Firestore daquele app (daquele projeto Firebase)
 É rápido basicamente "cria o cliente" para você usar o collection, addDoc {json}, etc.
 db é o "módulo de banco de dados"
+
+# IMPORTANTE - muda isso no firebase senão nao funciona as notas
+
+vai no site do firebase -> seu projeto -> Firestore Database -> aba Rules
+apaga tudo que tiver la e cola isso:
+
+
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/notes/{noteId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+
+
+
+
+clica em Publish e ta feito
+basicamente isso fala pro firebase "só deixa o usuario ver e salvar as proprias notas dele, nao as dos outros"

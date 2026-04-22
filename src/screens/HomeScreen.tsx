@@ -1,19 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Alert, Platform, Text, TextInput,
   View, KeyboardAvoidingView, Pressable, ScrollView,
 } from "react-native";
 import { signOut } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import {
+  collection, addDoc, deleteDoc, doc,
+  query, orderBy, onSnapshot, serverTimestamp,
+} from "firebase/firestore";
+import { auth, db } from "../lib/firebase";
 
 const accent = "#E8450A";
 
 type Note = { id: string; text: string };
-type Props = { userEmail: string | null };
+type Props = { userId: string | null };
 
-export default function HomeScreen({ userEmail }: Props) {
+export default function HomeScreen({ userId }: Props) {
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<Note[]>([]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const q = query(
+      collection(db, "users", userId, "notes"),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      setNotes(
+        snapshot.docs.map((d) => ({ id: d.id, text: d.data().text as string }))
+      );
+    });
+
+    return unsub;
+  }, [userId]);
 
   async function handleLogout() {
     try {
@@ -23,10 +44,26 @@ export default function HomeScreen({ userEmail }: Props) {
     }
   }
 
-  function addNote() {
-    if (!noteText.trim()) return;
-    setNotes((prev) => [{ id: Date.now().toString(), text: noteText.trim() }, ...prev]);
-    setNoteText("");
+  async function addNote() {
+    if (!noteText.trim() || !userId) return;
+    try {
+      await addDoc(collection(db, "users", userId, "notes"), {
+        text: noteText.trim(),
+        createdAt: serverTimestamp(),
+      });
+      setNoteText("");
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível salvar a nota.");
+    }
+  }
+
+  async function deleteNote(noteId: string) {
+    if (!userId) return;
+    try {
+      await deleteDoc(doc(db, "users", userId, "notes", noteId));
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível excluir a nota.");
+    }
   }
 
   return (
@@ -69,10 +106,14 @@ export default function HomeScreen({ userEmail }: Props) {
         {/* Notes */}
         {notes.map((n) => (
           <View key={n.id} style={{
+            flexDirection: "row", alignItems: "flex-start",
             borderLeftWidth: 3, borderLeftColor: accent,
-            backgroundColor: "#fafafa", borderRadius: 8, padding: 12,
+            backgroundColor: "#fafafa", borderRadius: 8, padding: 12, gap: 8,
           }}>
-            <Text style={{ fontSize: 14, color: "#1a1a1a" }}>{n.text}</Text>
+            <Text style={{ flex: 1, fontSize: 14, color: "#1a1a1a" }}>{n.text}</Text>
+            <Pressable onPress={() => deleteNote(n.id)}>
+              <Text style={{ color: "#aaa", fontSize: 18, lineHeight: 20 }}>×</Text>
+            </Pressable>
           </View>
         ))}
 
