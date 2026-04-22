@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Alert, Platform, Text, TextInput,
-  View, KeyboardAvoidingView, Pressable, ScrollView,
+  Image, KeyboardAvoidingView, Pressable, ScrollView,
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../lib/firebase";
@@ -37,14 +37,11 @@ export default function RegisterScreen({ onNavigateLogin }: Props) {
     >
       <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
 
-        {/* Placeholder image */}
-        <View style={{
-          width: "100%", height: 180, backgroundColor: "#f0f0f0",
-          borderRadius: 12, marginBottom: 8,
-          alignItems: "center", justifyContent: "center",
-        }}>
-          <Text style={{ color: "#aaa", fontSize: 14 }}>Imagem aqui</Text>
-        </View>
+        <Image
+          source={require("../assets/image2.png")}
+          style={{ width: "100%", height: 180, borderRadius: 12, marginBottom: 8 }}
+          resizeMode="contain"
+        />
 
         <Text style={{ fontSize: 24, fontWeight: "800", color: "#1a1a1a" }}>Criar conta</Text>
 

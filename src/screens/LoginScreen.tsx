@@ -30,14 +30,11 @@ export default function LoginScreen({ onNavigateRegister }: Props) {
     >
       <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
 
-        {/* Placeholder image */}
-        <View style={{
-          width: "100%", height: 200, backgroundColor: "#f0f0f0",
-          borderRadius: 12, marginBottom: 8,
-          alignItems: "center", justifyContent: "center",
-        }}>
-          <Text style={{ color: "#aaa", fontSize: 14 }}>Imagem aqui</Text>
-        </View>
+        <Image
+          source={require("../assets/image1.png")}
+          style={{ width: "100%", height: 200, borderRadius: 12, marginBottom: 8 }}
+          resizeMode="contain"
+        />
 
         <Text style={{ fontSize: 24, fontWeight: "800", color: "#1a1a1a" }}>Login</Text>
 
