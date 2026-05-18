@@ -12,24 +12,33 @@ import { auth, db } from "../lib/firebase";
 
 const accent = "#E8450A";
 
-type Note = { id: string; text: string };
+type Phone = { id: string; brand: string; model: string; price: string; seller: string };
 type Props = { userId: string | null };
 
 export default function HomeScreen({ userId }: Props) {
-  const [noteText, setNoteText] = useState("");
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
+  const [price, setPrice] = useState("");
+  const [seller, setSeller] = useState("");
+  const [phones, setPhones] = useState<Phone[]>([]);
 
   useEffect(() => {
     if (!userId) return;
 
     const q = query(
-      collection(db, "users", userId, "notes"),
+      collection(db, "users", userId, "phones"),
       orderBy("createdAt", "desc")
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
-      setNotes(
-        snapshot.docs.map((d) => ({ id: d.id, text: d.data().text as string }))
+      setPhones(
+        snapshot.docs.map((d) => ({
+          id: d.id,
+          brand: d.data().brand as string,
+          model: d.data().model as string,
+          price: d.data().price as string,
+          seller: d.data().seller as string,
+        }))
       );
     });
 
@@ -44,27 +53,41 @@ export default function HomeScreen({ userId }: Props) {
     }
   }
 
-  async function addNote() {
-    if (!noteText.trim() || !userId) return;
+  async function registerPhone() {
+    if (!brand.trim() || !model.trim() || !price.trim() || !seller.trim() || !userId) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
     try {
-      await addDoc(collection(db, "users", userId, "notes"), {
-        text: noteText.trim(),
+      await addDoc(collection(db, "users", userId, "phones"), {
+        brand: brand.trim(),
+        model: model.trim(),
+        price: price.trim(),
+        seller: seller.trim(),
         createdAt: serverTimestamp(),
       });
-      setNoteText("");
+      setBrand("");
+      setModel("");
+      setPrice("");
+      setSeller("");
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar a nota.");
+      Alert.alert("Error", "Could not register phone.");
     }
   }
 
-  async function deleteNote(noteId: string) {
+  async function deletePhone(phoneId: string) {
     if (!userId) return;
     try {
-      await deleteDoc(doc(db, "users", userId, "notes", noteId));
+      await deleteDoc(doc(db, "users", userId, "phones", phoneId));
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível excluir a nota.");
+      Alert.alert("Error", "Could not delete phone.");
     }
   }
+
+  const inputStyle = {
+    borderWidth: 1.5, borderColor: "#ddd", borderRadius: 10,
+    padding: 12, fontSize: 14, backgroundColor: "#fff",
+  };
 
   return (
     <KeyboardAvoidingView
@@ -75,43 +98,72 @@ export default function HomeScreen({ userId }: Props) {
 
         {/* Header */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text style={{ fontSize: 20, fontWeight: "800", color: "#1a1a1a" }}>Notas</Text>
+          <Text style={{ fontSize: 20, fontWeight: "800", color: "#1a1a1a" }}>Phone Registry</Text>
           <Pressable
             onPress={handleLogout}
             style={{ backgroundColor: accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
           >
-            <Text style={{ color: "#fff", fontWeight: "600" }}>Sair</Text>
+            <Text style={{ color: "#fff", fontWeight: "600" }}>Logout</Text>
           </Pressable>
         </View>
 
-        {/* Input */}
+        {/* Form */}
+        <Text style={{ fontSize: 13, fontWeight: "700", color: "#555", marginBottom: -6 }}>REGISTER A PHONE</Text>
+
         <TextInput
-          value={noteText}
-          onChangeText={setNoteText}
-          placeholder="Nova nota..."
+          value={brand}
+          onChangeText={setBrand}
+          placeholder="Brand (e.g. Apple, Samsung)"
           placeholderTextColor="#aaa"
-          multiline
-          style={{
-            borderWidth: 1.5, borderColor: "#ddd", borderRadius: 10,
-            padding: 12, fontSize: 14, minHeight: 80, textAlignVertical: "top",
-          }}
+          style={inputStyle}
         />
+        <TextInput
+          value={model}
+          onChangeText={setModel}
+          placeholder="Model (e.g. iPhone 15, Galaxy S24)"
+          placeholderTextColor="#aaa"
+          style={inputStyle}
+        />
+        <TextInput
+          value={price}
+          onChangeText={setPrice}
+          placeholder="Price (e.g. $799)"
+          placeholderTextColor="#aaa"
+          keyboardType="decimal-pad"
+          style={inputStyle}
+        />
+        <TextInput
+          value={seller}
+          onChangeText={setSeller}
+          placeholder="Seller name"
+          placeholderTextColor="#aaa"
+          style={inputStyle}
+        />
+
         <Pressable
-          onPress={addNote}
+          onPress={registerPhone}
           style={{ backgroundColor: accent, borderRadius: 10, padding: 13, alignItems: "center" }}
         >
-          <Text style={{ color: "#fff", fontWeight: "700" }}>Adicionar</Text>
+          <Text style={{ color: "#fff", fontWeight: "700" }}>Register Phone</Text>
         </Pressable>
 
-        {/* Notes */}
-        {notes.map((n) => (
-          <View key={n.id} style={{
+        {/* Phone list */}
+        {phones.length > 0 && (
+          <Text style={{ fontSize: 13, fontWeight: "700", color: "#555", marginTop: 6 }}>REGISTERED PHONES</Text>
+        )}
+
+        {phones.map((p) => (
+          <View key={p.id} style={{
             flexDirection: "row", alignItems: "flex-start",
             borderLeftWidth: 3, borderLeftColor: accent,
             backgroundColor: "#fafafa", borderRadius: 8, padding: 12, gap: 8,
           }}>
-            <Text style={{ flex: 1, fontSize: 14, color: "#1a1a1a" }}>{n.text}</Text>
-            <Pressable onPress={() => deleteNote(n.id)}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: "#1a1a1a" }}>{p.brand} {p.model}</Text>
+              <Text style={{ fontSize: 13, color: "#555" }}>Price: {p.price}</Text>
+              <Text style={{ fontSize: 13, color: "#888" }}>Seller: {p.seller}</Text>
+            </View>
+            <Pressable onPress={() => deletePhone(p.id)}>
               <Text style={{ color: "#aaa", fontSize: 18, lineHeight: 20 }}>×</Text>
             </Pressable>
           </View>
